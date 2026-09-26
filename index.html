@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="TWH Tools">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<meta name="theme-color" content="#F4F6F7">
+<title>TWH Tools — Ulrich Biendl TGA Consulting</title>
+<style>
+  :root{
+    --paper:#F4F6F7;
+    --paper-raise:#FFFFFF;
+    --line:#DCE3E7;
+    --ink:#0F2A42;
+    --ink-soft:#4F6472;
+    --navy:#1C4A72;
+    --navy-deep:#123249;
+    --blue:#25629A;
+    --teal:#3E8E86;
+    --amber:#B4782A;
+    --red:#C0524A;
+    --shadow:0 1px 2px rgba(15,42,66,0.06), 0 8px 24px rgba(15,42,66,0.06);
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; padding:0; background:var(--paper); color:var(--ink); font-family:'IBM Plex Sans',-apple-system,sans-serif;}
+  body{padding-bottom:env(safe-area-inset-bottom); min-height:100vh;}
+  .mono{font-family:'IBM Plex Mono',ui-monospace,monospace;}
+
+  header{padding:20px 20px 16px; border-bottom:1px solid var(--line); position:sticky; top:0; background:var(--paper); z-index:10; padding-top:calc(20px + env(safe-area-inset-top));}
+  header .kicker{font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:500; letter-spacing:0.12em; text-transform:uppercase; color:var(--blue); margin-bottom:6px;}
+  header h1{margin:0; font-size:19px; font-weight:700; letter-spacing:-0.01em; color:var(--ink); line-height:1.3;}
+
+  main{max-width:520px; margin:0 auto; padding:16px 16px 40px;}
+
+  .tabs{display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-bottom:16px;}
+  .tab{padding:11px 2px; text-align:center; border-radius:10px; background:var(--paper-raise); border:1px solid var(--line); font-size:12.5px; font-weight:600; color:var(--ink-soft); cursor:pointer; transition:all .15s;}
+  .tab.active{background:var(--navy); color:#fff; border-color:var(--navy);}
+
+  .card{background:var(--paper-raise); border-radius:14px; padding:18px 16px; margin-bottom:14px; border:1px solid var(--line); box-shadow:var(--shadow);}
+  .card h2{margin:0 0 14px; font-size:11px; font-weight:600; color:var(--blue); text-transform:uppercase; letter-spacing:0.08em; font-family:'IBM Plex Mono',monospace;}
+
+  label{display:block; font-size:12.5px; color:var(--ink-soft); margin-bottom:6px; margin-top:14px;}
+  label:first-of-type{margin-top:0;}
+
+  select, input[type=number]{
+    width:100%; padding:12px 12px; border-radius:10px; border:1px solid var(--line);
+    background:var(--paper); color:var(--ink); font-size:16px; appearance:none; -webkit-appearance:none;
+    font-family:'IBM Plex Sans',sans-serif;
+  }
+  select:focus, input:focus{outline:none; border-color:var(--blue);}
+
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .grid3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;}
+  .grid2 label, .grid3 label{margin-top:14px;}
+  .grid3 input{padding:12px 8px; text-align:center;}
+  .row-head{font-size:13px; font-weight:600; color:var(--ink); margin-top:16px; display:flex; justify-content:space-between; align-items:baseline;}
+  .row-head .sub{font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--ink-soft); font-weight:500;}
+  .row-head:first-of-type{margin-top:0;}
+  .mini{font-size:10.5px; color:var(--ink-soft); margin:4px 0 0; text-transform:uppercase; letter-spacing:0.04em; text-align:center;}
+
+  .formula{font-family:'IBM Plex Mono',monospace; font-size:13px; background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:10px 12px; color:var(--ink); line-height:1.6; overflow-x:auto;}
+
+  .pipe-info{display:flex; gap:10px; margin-top:14px;}
+  .pipe-info .chip{flex:1; background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:10px 8px; text-align:center; min-width:0;}
+  .pipe-info .chip .val{font-family:'IBM Plex Mono',monospace; font-size:16px; font-weight:600; color:var(--ink);}
+  .pipe-info .chip .lab{font-size:10px; color:var(--ink-soft); margin-top:2px; text-transform:uppercase; letter-spacing:0.05em;}
+
+  .btnrow{display:flex; gap:8px; margin-top:14px; flex-wrap:wrap;}
+  .quickbtn{padding:8px 12px; border-radius:20px; background:var(--paper); border:1px solid var(--line); color:var(--ink); font-size:13px; cursor:pointer; font-family:'IBM Plex Sans',sans-serif;}
+  .quickbtn:active{background:var(--navy); color:#fff; border-color:var(--navy);}
+
+  .result{margin-top:18px; padding:16px; border-radius:12px; background:var(--paper); border:1px solid var(--line); text-align:center;}
+  .result .big{font-family:'IBM Plex Mono',monospace; font-size:30px; font-weight:600; color:var(--ink); line-height:1.1;}
+  .result .unit{font-size:12.5px; color:var(--ink-soft); margin-top:3px;}
+
+  .result.v-band{border-width:1.5px;}
+  .band-green{border-color:var(--teal) !important; background:rgba(62,142,134,0.08) !important;}
+  .band-amber{border-color:var(--amber) !important; background:rgba(180,120,40,0.08) !important;}
+  .band-red{border-color:var(--red) !important; background:rgba(192,82,74,0.08) !important;}
+  .band-label{font-size:12px; font-weight:600; margin-top:8px; letter-spacing:0.02em;}
+  .band-green .band-label{color:var(--teal);}
+  .band-amber .band-label{color:var(--amber);}
+  .band-red .band-label{color:var(--red);}
+
+  table.calc{width:100%; border-collapse:collapse; font-size:13px; margin-top:4px;}
+  table.calc td{padding:7px 0; border-bottom:1px solid var(--line); vertical-align:top;}
+  table.calc td:last-child{text-align:right; font-family:'IBM Plex Mono',monospace; font-weight:500; white-space:nowrap; padding-left:10px;}
+  table.calc tr.sum td{font-weight:700; border-bottom:none; border-top:1.5px solid var(--ink);}
+  table.calc td small{display:block; color:var(--ink-soft); font-size:11px;}
+
+  .notes{margin:12px 0 0; padding:0; list-style:none;}
+  .notes li{font-size:12px; line-height:1.5; padding:9px 10px 9px 12px; border-left:3px solid var(--line); background:var(--paper); border-radius:0 8px 8px 0; margin-bottom:6px;}
+  .notes li.n-red{border-color:var(--red);}
+  .notes li.n-amber{border-color:var(--amber);}
+  .notes li.n-green{border-color:var(--teal);}
+  .notes li.n-blue{border-color:var(--blue);}
+
+  .copybtn{width:100%; margin-top:12px; padding:12px; border-radius:10px; border:1px solid var(--navy); background:var(--paper-raise); color:var(--navy); font-size:14px; font-weight:600; font-family:'IBM Plex Sans',sans-serif; cursor:pointer;}
+  .copybtn:active{background:var(--navy); color:#fff;}
+
+  .hint{font-size:11.5px; color:var(--ink-soft); margin-top:10px; line-height:1.55;}
+  .hint b{color:var(--ink);}
+
+  .stepper{display:flex; align-items:center; gap:10px;}
+  .stepper button{width:40px; height:40px; border-radius:10px; border:1px solid var(--line); background:var(--paper); color:var(--ink); font-size:20px; font-weight:600; flex:none;}
+  .stepper input{text-align:center; flex:1;}
+
+  .seg{display:flex; gap:6px; margin-bottom:4px;}
+  .seg button{flex:1; padding:9px 4px; border-radius:8px; border:1px solid var(--line); background:var(--paper); font-size:12.5px; font-weight:600; color:var(--ink-soft); font-family:'IBM Plex Sans',sans-serif; cursor:pointer;}
+  .seg button.active{background:var(--navy); border-color:var(--navy); color:#fff;}
+
+  footer{text-align:center; padding:22px 0 10px; font-size:10.5px; color:var(--ink-soft); font-family:'IBM Plex Mono',monospace; letter-spacing:0.03em;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="kicker">TGA Consulting · Trinkwasserhygiene</div>
+  <h1>TWH Tools · Speicher, Mischung &amp; Leitung</h1>
+</header>
+
+<main>
+  <div class="tabs">
+    <div class="tab active" data-tab="speicher">Speicher</div>
+    <div class="tab" data-tab="misch">Mischung</div>
+    <div class="tab" data-tab="inhalt">Inhalt</div>
+    <div class="tab" data-tab="fliess">Fließg.</div>
+  </div>
+
+  <!-- ============ TAB: Speicherprüfung ============ -->
+  <div id="panel-speicher" class="panel">
+
+    <div class="card">
+      <h2>Temperaturen</h2>
+      <div class="grid3">
+        <div><label>ϑ<sub>m</sub> Misch °C</label><input type="number" id="sTm" value="40" step="1" inputmode="decimal"></div>
+        <div><label>ϑ<sub>k</sub> Kalt °C</label><input type="number" id="sTk" value="10" step="1" inputmode="decimal"></div>
+        <div><label>ϑ<sub>w</sub> Speicher °C</label><input type="number" id="sTw" value="60" step="1" inputmode="decimal"></div>
+      </div>
+      <div class="hint">40 °C Duschtemperatur · 10 °C am Hauswassereingang · 60 °C nach DVGW W 551. Für die Prüfung des Bestands ϑ<sub>w</sub> auf die <b>gemessene</b> Speichertemperatur setzen.</div>
+      <div class="result" style="margin-top:14px;">
+        <div class="big" id="sShare">60,0 %</div>
+        <div class="unit">Warmwasseranteil am Mischwasser</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Spitzenbedarf (Mischwasser 40 °C)</h2>
+
+      <div class="row-head">Duschen <span class="sub" id="sumDusche">0 l</span></div>
+      <div class="grid3">
+        <div><input type="number" id="dN" value="4" min="0" step="1" inputmode="numeric"><div class="mini">Anzahl</div></div>
+        <div><input type="number" id="dQ" value="9" min="0" step="0.5" inputmode="decimal"><div class="mini">l/min</div></div>
+        <div><input type="number" id="dT" value="6" min="0" step="1" inputmode="decimal"><div class="mini">min / Nutzung</div></div>
+      </div>
+
+      <div class="row-head">Badewannen <span class="sub" id="sumWanne">0 l</span></div>
+      <div class="grid2">
+        <div><input type="number" id="wN" value="0" min="0" step="1" inputmode="numeric"><div class="mini">Anzahl</div></div>
+        <div><input type="number" id="wV" value="140" min="0" step="10" inputmode="decimal"><div class="mini">l Füllung</div></div>
+      </div>
+
+      <div class="row-head">Waschtische <span class="sub" id="sumWT">0 l</span></div>
+      <div class="grid2">
+        <div><input type="number" id="tN" value="4" min="0" step="1" inputmode="numeric"><div class="mini">Anzahl</div></div>
+        <div><input type="number" id="tV" value="5" min="0" step="1" inputmode="decimal"><div class="mini">l / Nutzung</div></div>
+      </div>
+
+      <div class="row-head">Sonstiges <span class="sub">Spüle, Ausguss …</span></div>
+      <input type="number" id="xV" value="0" min="0" step="5" inputmode="decimal"><div class="mini">l Mischwasser gesamt</div>
+
+      <label style="margin-top:16px;">Gleichzeitigkeit in der Spitzenzeit (%)</label>
+      <input type="number" id="gz" value="100" min="0" max="100" step="5" inputmode="decimal">
+
+      <label>Dauer der Spitzenzeit (min)</label>
+      <input type="number" id="tPeak" value="30" min="0" step="5" inputmode="decimal">
+
+      <div class="btnrow">
+        <button class="quickbtn" data-preset="efh">EFH</button>
+        <button class="quickbtn" data-preset="mfh">MFH 10 WE</button>
+        <button class="quickbtn" data-preset="klinik">Station 20 Betten</button>
+        <button class="quickbtn" data-preset="sport">Sporthalle</button>
+      </div>
+      <div class="hint">Anzahl = Nutzungen <b>innerhalb der Spitzenzeit</b>, nicht Anzahl Entnahmestellen. Presets sind grobe Startwerte – immer an den tatsächlichen Nutzungsablauf anpassen.</div>
+    </div>
+
+    <div class="card">
+      <h2>Verbauter Speicher &amp; Nachheizung</h2>
+      <div class="grid2">
+        <div><label>Speicherinhalt (l)</label><input type="number" id="vSp" value="300" min="0" step="50" inputmode="decimal"></div>
+        <div><label>Anzahl Speicher</label><input type="number" id="nSp" value="1" min="1" step="1" inputmode="numeric"></div>
+      </div>
+      <label>Nutzbarer Anteil (%)</label>
+      <input type="number" id="nutz" value="85" min="10" max="100" step="5" inputmode="decimal">
+      <div class="hint">Durch Durchmischung am Kaltwassereintritt ist nicht der volle Inhalt auf ϑ<sub>w</sub> entnehmbar. Richtwert 80–90 % bei guter Schichtung, bei liegenden Speichern / schlechter Einströmung deutlich weniger.</div>
+
+      <label>Nachheizleistung (kW)</label>
+      <input type="number" id="pNh" value="15" min="0" step="1" inputmode="decimal">
+      <div class="hint">Tatsächlich an den Speicher übertragbare Leistung (Wärmetauscher/Wärmeerzeuger, Typenschild bzw. Datenblatt – der kleinere Wert zählt). 0 = keine Nachheizung in der Spitze berücksichtigen.</div>
+    </div>
+
+    <div class="card">
+      <h2>Tagesbedarf (Wasseraustausch)</h2>
+      <div class="grid2">
+        <div><label>Personen / Betten</label><input type="number" id="pers" value="4" min="0" step="1" inputmode="numeric"></div>
+        <div><label>l / Pers·d bei 60 °C</label><input type="number" id="spez" value="30" min="0" step="5" inputmode="decimal"></div>
+      </div>
+      <div class="hint">Richtwerte Warmwasser 60 °C: Wohnen ca. 25–40 l/P·d, Pflege/Klinik stark nutzungsabhängig – wenn vorhanden gemessene Verbräuche (WMZ, Wasserzähler WW) verwenden.</div>
+    </div>
+
+    <div class="card">
+      <h2>Ergebnis</h2>
+      <div class="result v-band" id="sResultBox">
+        <div class="big" id="sRatio">–</div>
+        <div class="unit">Deckungsgrad Spitzenbedarf</div>
+        <div class="band-label" id="sBand">–</div>
+      </div>
+
+      <table class="calc" id="sTable"></table>
+      <ul class="notes" id="sNotes"></ul>
+
+      <button class="copybtn" id="sCopy">Ergebnis als Text kopieren</button>
+    </div>
+  </div>
+
+  <!-- ============ TAB: Mischung ============ -->
+  <div id="panel-misch" class="panel" style="display:none;">
+    <div class="card">
+      <h2>Mischungsgleichung</h2>
+      <div class="formula">m<sub>m</sub>·ϑ<sub>m</sub> = m<sub>k</sub>·ϑ<sub>k</sub> + m<sub>w</sub>·ϑ<sub>w</sub><br>
+        ⇒ m<sub>w</sub> = m<sub>m</sub> · (ϑ<sub>m</sub> − ϑ<sub>k</sub>) / (ϑ<sub>w</sub> − ϑ<sub>k</sub>)</div>
+
+      <label style="margin-top:16px;">Gesucht</label>
+      <div class="seg" id="mSeg">
+        <button data-mode="mw" class="active">Warmwasser m<sub>w</sub></button>
+        <button data-mode="mm">Mischwasser m<sub>m</sub></button>
+        <button data-mode="tm">Mischtemp. ϑ<sub>m</sub></button>
+      </div>
+
+      <div class="grid3">
+        <div><label>ϑ<sub>m</sub> °C</label><input type="number" id="mTm" value="40" step="1" inputmode="decimal"></div>
+        <div><label>ϑ<sub>k</sub> °C</label><input type="number" id="mTk" value="10" step="1" inputmode="decimal"></div>
+        <div><label>ϑ<sub>w</sub> °C</label><input type="number" id="mTw" value="60" step="1" inputmode="decimal"></div>
+      </div>
+      <div class="grid2">
+        <div id="mMmWrap"><label>m<sub>m</sub> Mischwasser (kg ≈ l)</label><input type="number" id="mMm" value="100" step="5" inputmode="decimal"></div>
+        <div id="mMwWrap" style="display:none;"><label>m<sub>w</sub> Warmwasser (kg ≈ l)</label><input type="number" id="mMw" value="60" step="5" inputmode="decimal"></div>
+        <div id="mMkWrap" style="display:none;"><label>m<sub>k</sub> Kaltwasser (kg ≈ l)</label><input type="number" id="mMk" value="40" step="5" inputmode="decimal"></div>
+      </div>
+
+      <div class="result">
+        <div class="big" id="mResult">–</div>
+        <div class="unit" id="mUnit">–</div>
+      </div>
+      <div class="pipe-info">
+        <div class="chip"><div class="val" id="mChipW">–</div><div class="lab">Warm</div></div>
+        <div class="chip"><div class="val" id="mChipK">–</div><div class="lab">Kalt</div></div>
+        <div class="chip"><div class="val" id="mChipM">–</div><div class="lab">Misch</div></div>
+      </div>
+      <div class="hint">Vereinfachung: gleiche spezifische Wärmekapazität und Dichte für alle Ströme, keine Wärmeverluste. 1 kg ≈ 1 l.</div>
+    </div>
+
+    <div class="card">
+      <h2>Einfluss der Speichertemperatur</h2>
+      <table class="calc" id="mTable"></table>
+      <div class="hint">Warmwasserbedarf je 100 l Mischwasser bei aktuellem ϑ<sub>m</sub> / ϑ<sub>k</sub>. Zeigt, wie stark ein abgesenkter Speicher die verfügbare Mischwassermenge reduziert.</div>
+    </div>
+  </div>
+
+  <!-- ============ gemeinsame Rohrauswahl (nur Inhalt/Fließg.) ============ -->
+  <div class="card" id="pipeCard" style="display:none;">
+    <h2>Rohrmaterial &amp; Dimension</h2>
+    <label>Material</label>
+    <select id="matSelect"></select>
+
+    <label>Dimension</label>
+    <select id="pipeSelect"></select>
+
+    <div id="customDiWrap" style="display:none;">
+      <label>Innendurchmesser (mm)</label>
+      <input type="number" id="customDi" value="20.0" step="0.1" inputmode="decimal">
+    </div>
+
+    <div class="pipe-info">
+      <div class="chip"><div class="val" id="chipDa">22,0</div><div class="lab">Außen Ø mm</div></div>
+      <div class="chip"><div class="val" id="chipDi">19,6</div><div class="lab">Innen Ø mm</div></div>
+      <div class="chip"><div class="val" id="chipLm">0,302</div><div class="lab">Liter / m</div></div>
+    </div>
+    <div class="hint" id="matHint"></div>
+  </div>
+
+  <!-- ============ TAB: Leitungsinhalt ============ -->
+  <div id="panel-inhalt" class="panel" style="display:none;">
+    <div class="card">
+      <h2>Rohrabschnitt</h2>
+      <label>Rohrlänge (m)</label>
+      <div class="stepper">
+        <button type="button" id="lenMinus">–</button>
+        <input type="number" id="lenInput" value="10" step="0.5" inputmode="decimal">
+        <button type="button" id="lenPlus">+</button>
+      </div>
+      <div class="btnrow">
+        <button class="quickbtn" data-len="5">5 m</button>
+        <button class="quickbtn" data-len="10">10 m</button>
+        <button class="quickbtn" data-len="20">20 m</button>
+        <button class="quickbtn" data-len="50">50 m</button>
+        <button class="quickbtn" data-len="100">100 m</button>
+      </div>
+
+      <div class="result v-band" id="inhaltBox">
+        <div class="big" id="inhaltResult">3,02</div>
+        <div class="unit">Liter im Rohrabschnitt</div>
+        <div class="band-label" id="inhaltBand"></div>
+      </div>
+      <div class="hint">Berechnung: V = π/4 × Innendurchmesser² × Länge. Reines Rohrvolumen, ohne Fittinge/Armaturen/Speicher. Die 3-Liter-Markierung bezieht sich auf W 551 (Leitungsinhalt zwischen TWE-Abgang und Entnahmestelle ohne Zirkulation).</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB: Fließgeschwindigkeit ============ -->
+  <div id="panel-fliess" class="panel" style="display:none;">
+    <div class="card">
+      <h2>Gleichzeitige Entnahme</h2>
+      <label>Anzahl gleichzeitig geöffneter Armaturen</label>
+      <div class="stepper">
+        <button type="button" id="cntMinus">–</button>
+        <input type="number" id="cntInput" value="3" step="1" min="1" inputmode="numeric">
+        <button type="button" id="cntPlus">+</button>
+      </div>
+
+      <label>Durchfluss je Armatur (l/s)</label>
+      <input type="number" id="perFixture" value="0.10" step="0.01" inputmode="decimal">
+      <div class="btnrow">
+        <button class="quickbtn" data-q="0.10">Waschtisch ~0,10</button>
+        <button class="quickbtn" data-q="0.15">Dusche ~0,15</button>
+        <button class="quickbtn" data-q="0.20">Badewanne ~0,20</button>
+        <button class="quickbtn" data-q="0.15">Spüle ~0,15</button>
+      </div>
+      <div class="hint">Richtwerte für Berechnungsdurchfluss je Entnahmestelle – im Einzelfall gegen aktuelle DIN 1988-300 / Herstellerangabe der Armatur prüfen.</div>
+
+      <label style="margin-top:18px;">oder Summendurchfluss direkt (l/s)</label>
+      <input type="number" id="directQ" placeholder="wird automatisch berechnet, falls leer" step="0.01" inputmode="decimal">
+
+      <div class="result v-band" id="vResultBox">
+        <div class="big" id="vResult">0,89</div>
+        <div class="unit">m/s Fließgeschwindigkeit</div>
+        <div class="band-label" id="vBandLabel">im empfohlenen Bereich</div>
+      </div>
+      <div class="hint"><b>Orientierung:</b> ≤ 2,0 m/s unkritisch · 2,0–3,0 m/s erhöht (Geräusch/Erosion prüfen) · > 3,0 m/s zu hoch, Dimension prüfen. Bezugswerte aus VDI/DIN-Praxis, projektspezifisch verifizieren.</div>
+    </div>
+  </div>
+
+  <footer>ULRICH BIENDL · TGA CONSULTING · FELDRECHNER, ERSETZT KEINE BEMESSUNG NACH DIN 4708 / DIN EN 12831-3 / DIN 1988-300</footer>
+</main>
+
+<script>
+  const C_W = 4.187; // kJ/(kg·K)
+  const fmt = (n, d=2) => (isFinite(n) ? n : 0).toLocaleString('de-DE', {minimumFractionDigits:d, maximumFractionDigits:d});
+  const num = id => { const v = parseFloat(document.getElementById(id).value); return isFinite(v) ? v : 0; };
+  const $ = id => document.getElementById(id);
+
+  // ---------------- Tabs ----------------
+  document.querySelectorAll('.tab').forEach(t=>{
+    t.addEventListener('click', ()=>{
+      document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+      t.classList.add('active');
+      document.querySelectorAll('.panel').forEach(p=>p.style.display='none');
+      $('panel-'+t.dataset.tab).style.display='block';
+      $('pipeCard').style.display = (t.dataset.tab==='inhalt' || t.dataset.tab==='fliess') ? 'block' : 'none';
+    });
+  });
+
+  // =====================================================================
+  // Speicherprüfung
+  // =====================================================================
+  const presets = {
+    efh:    {dN:2,  dQ:9,  dT:6, wN:1, wV:140, tN:2,  tV:5, xV:10, gz:100, tPeak:30, vSp:300,  nSp:1, pNh:15, pers:4,  spez:30},
+    mfh:    {dN:8,  dQ:9,  dT:6, wN:2, wV:140, tN:10, tV:5, xV:40, gz:70,  tPeak:60, vSp:750,  nSp:1, pNh:40, pers:25, spez:30},
+    klinik: {dN:10, dQ:9,  dT:7, wN:0, wV:140, tN:20, tV:5, xV:60, gz:80,  tPeak:60, vSp:1000, nSp:1, pNh:50, pers:20, spez:50},
+    sport:  {dN:20, dQ:9,  dT:5, wN:0, wV:140, tN:6,  tV:3, xV:0,  gz:100, tPeak:15, vSp:1500, nSp:1, pNh:60, pers:60, spez:15},
+  };
+  document.querySelectorAll('[data-preset]').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      const p = presets[b.dataset.preset];
+      Object.keys(p).forEach(k=>{ $(k).value = p[k]; });
+      calcSpeicher();
+    });
+  });
+
+  let lastReport = '';
+
+  function calcSpeicher(){
+    const tm = num('sTm'), tk = num('sTk'), tw = num('sTw');
+    const dT = tw - tk;
+    const share = (tw > tm && tm > tk) ? (tm - tk) / dT : NaN;
+    $('sShare').textContent = isFinite(share) ? fmt(share*100,1) + ' %' : 'ϑw ≤ ϑm';
+
+    const vDusche = num('dN') * num('dQ') * num('dT');
+    const vWanne  = num('wN') * num('wV');
+    const vWT     = num('tN') * num('tV');
+    const vX      = num('xV');
+    $('sumDusche').textContent = fmt(vDusche,0) + ' l';
+    $('sumWanne').textContent  = fmt(vWanne,0) + ' l';
+    $('sumWT').textContent     = fmt(vWT,0) + ' l';
+
+    const gz = Math.min(100, Math.max(0, num('gz'))) / 100;
+    const mMix = (vDusche + vWanne + vWT + vX) * gz;       // l Mischwasser 40 °C
+    const mW   = isFinite(share) ? mMix * share : NaN;       // l Warmwasser bei ϑw
+
+    const vGes   = num('vSp') * Math.max(1, num('nSp'));
+    const nutz   = Math.min(100, Math.max(0, num('nutz'))) / 100;
+    const vNutz  = vGes * nutz;
+
+    const pNh   = num('pNh');
+    const tPeak = num('tPeak');
+    // Nachheizmenge in der Spitzenzeit: V = P·t / (c·Δϑ)
+    const vNh   = (dT > 0) ? pNh * tPeak * 60 / (C_W * dT) : 0;
+    const vVerf = vNutz + vNh;
+
+    const ratio = mW > 0 ? vVerf / mW : NaN;
+    const vMin  = isFinite(mW) ? Math.max(0, (mW - vNh) / (nutz || 1)) : NaN;
+
+    const tAuf  = (pNh > 0 && dT > 0) ? vGes * C_W * dT / (pNh * 60) : NaN;   // min
+    const mixAvail = isFinite(share) && share > 0 ? vVerf / share : NaN;     // l Mischwasser möglich
+    const duschen  = (num('dQ')*num('dT')) > 0 ? mixAvail / (num('dQ')*num('dT')) : NaN;
+
+    const tagW   = num('pers') * num('spez');                 // l/d bei 60 °C
+    // Tagesbedarf auf ϑw umrechnen, falls Speicher nicht auf 60 °C
+    const tagWt  = (tw > tk) ? tagW * (60 - tk) / (tw - tk) : tagW;
+    const exch   = vGes > 0 ? tagWt / vGes : NaN;
+
+    // ---- Ampel ----
+    const box = $('sResultBox');
+    box.classList.remove('band-green','band-amber','band-red');
+    let band = '–', cls = '';
+    if(!isFinite(ratio)){ band = 'Eingaben prüfen'; }
+    else if(ratio < 0.9){ cls='band-red';   band='unterdimensioniert – Spitzenbedarf nicht gedeckt'; }
+    else if(ratio < 1.0){ cls='band-amber'; band='knapp – Grenzbereich'; }
+    else if(ratio <= 2.0){ cls='band-green'; band='ausreichend dimensioniert'; }
+    else { cls='band-amber'; band='deutlich überdimensioniert – Wasseraustausch prüfen'; }
+    if(cls) box.classList.add(cls);
+    $('sRatio').textContent = isFinite(ratio) ? fmt(ratio*100,0) + ' %' : '–';
+    $('sBand').textContent = band;
+
+    // ---- Rechenweg ----
+    const rows = [
+      ['Mischwasser Spitze (40 °C)<small>Summe × Gleichzeitigkeit ' + fmt(gz*100,0) + ' %</small>', fmt(mMix,0) + ' l'],
+      ['davon Warmwasser bei ' + fmt(tw,0) + ' °C<small>m<sub>w</sub> = m<sub>m</sub>·(ϑ<sub>m</sub>−ϑ<sub>k</sub>)/(ϑ<sub>w</sub>−ϑ<sub>k</sub>)</small>', isFinite(mW) ? fmt(mW,0) + ' l' : '–'],
+      ['Speicherinhalt gesamt', fmt(vGes,0) + ' l'],
+      ['nutzbar (' + fmt(nutz*100,0) + ' %)', fmt(vNutz,0) + ' l'],
+      ['+ Nachheizung in ' + fmt(tPeak,0) + ' min<small>' + fmt(pNh,1) + ' kW · t / (c · Δϑ)</small>', fmt(vNh,0) + ' l'],
+      ['verfügbar in der Spitze', fmt(vVerf,0) + ' l', 'sum'],
+      ['erforderlicher Speicherinhalt<small>(Bedarf − Nachheizung) / nutzbarer Anteil</small>', isFinite(vMin) ? fmt(vMin,0) + ' l' : '–'],
+      ['entspricht Mischwasser 40 °C', isFinite(mixAvail) ? fmt(mixAvail,0) + ' l' : '–'],
+      ['≙ Duschvorgänge à ' + fmt(num('dQ')*num('dT'),0) + ' l', isFinite(duschen) ? fmt(duschen,1) : '–'],
+      ['Aufheizzeit ' + fmt(tk,0) + ' → ' + fmt(tw,0) + ' °C (gesamt)', isFinite(tAuf) ? fmt(tAuf,0) + ' min' : '–'],
+      ['Tagesbedarf WW bei ' + fmt(tw,0) + ' °C', fmt(tagWt,0) + ' l/d'],
+      ['Wasseraustausch Speicher', isFinite(exch) ? fmt(exch,2) + ' × / d' : '–'],
+    ];
+    $('sTable').innerHTML = rows.map(r=>`<tr class="${r[2]||''}"><td>${r[0]}</td><td>${r[1]}</td></tr>`).join('');
+
+    // ---- Hinweise ----
+    const notes = [];
+    if(tw < 55) notes.push(['n-red', `Speichertemperatur ${fmt(tw,0)} °C < 55 °C: Anforderung W 551 an Austrittstemperatur (≥ 60 °C, Rücklauf Zirkulation ≥ 55 °C) nicht erfüllt.`]);
+    else if(tw < 60) notes.push(['n-amber', `Speichertemperatur ${fmt(tw,0)} °C < 60 °C: bei Großanlagen am Austritt ≥ 60 °C gefordert (W 551). Nur bei Kleinanlagen ohne besondere Anforderung zulässig; ≥ 50 °C empfohlen.`]);
+    if(vGes > 400) notes.push(['n-blue', `Speicherinhalt ${fmt(vGes,0)} l > 400 l → <b>Großanlage</b> nach W 551: ϑ ≥ 60 °C am Austritt, Vorwärmstufen einmal täglich auf ≥ 60 °C erwärmen.`]);
+    else notes.push(['n-blue', `Speicherinhalt ≤ 400 l: Einstufung Klein-/Großanlage zusätzlich über Leitungsinhalt (> 3 l ohne Zirkulation) und Gebäudeart prüfen.`]);
+    if(isFinite(ratio) && ratio < 1) notes.push(['n-red', `Fehlbetrag ca. ${fmt(mW - vVerf,0)} l bei ${fmt(tw,0)} °C. Folge in der Praxis: Temperatureinbruch in der Spitze, Nutzer erhöhen Warmwasseranteil, Speicher wird ggf. dauerhaft höher/länger beheizt.`]);
+    if(isFinite(exch)){
+      if(exch < 1) notes.push(['n-amber', `Rechnerischer Wasseraustausch nur ${fmt(exch,2)}× pro Tag – Speicherinhalt wird nicht täglich ausgetauscht. Stagnationsrisiko, Aufenthaltszeit ca. ${fmt(1/exch,1)} Tage. Überdimensionierung / Außerbetriebnahme einzelner Speicher prüfen.`]);
+      else notes.push(['n-green', `Wasseraustausch ${fmt(exch,2)}× pro Tag – Speicherinhalt wird rechnerisch mindestens täglich erneuert.`]);
+    }
+    if(num('nSp') > 1) notes.push(['n-blue', `${fmt(num('nSp'),0)} Speicher: Durchströmung (Reihe/parallel nach Tichelmann) und gleichmäßigen Austausch aller Speicher prüfen – ungleich durchströmte Parallelspeicher stagnieren.`]);
+    if(isFinite(tAuf) && tAuf > 120) notes.push(['n-amber', `Aufheizzeit ca. ${fmt(tAuf/60,1)} h – Nachheizleistung im Verhältnis zum Speichervolumen gering; Regeneration zwischen den Spitzen prüfen.`]);
+    $('sNotes').innerHTML = notes.map(n=>`<li class="${n[0]}">${n[1]}</li>`).join('');
+
+    // ---- Textbericht ----
+    const strip = s => s.replace(/<small>.*?<\/small>/g,'').replace(/<[^>]+>/g,'');
+    lastReport =
+`Speicherprüfung Trinkwassererwärmer
+Temperaturen: ϑm = ${fmt(tm,0)} °C, ϑk = ${fmt(tk,0)} °C, ϑw = ${fmt(tw,0)} °C → Warmwasseranteil ${isFinite(share)?fmt(share*100,1):'–'} %
+Spitzenbedarf: Duschen ${fmt(num('dN'),0)} × ${fmt(num('dQ'),1)} l/min × ${fmt(num('dT'),0)} min, Wannen ${fmt(num('wN'),0)} × ${fmt(num('wV'),0)} l, Waschtische ${fmt(num('tN'),0)} × ${fmt(num('tV'),0)} l, Sonstiges ${fmt(vX,0)} l; Gleichzeitigkeit ${fmt(gz*100,0)} %, Spitzenzeit ${fmt(tPeak,0)} min
+Speicher: ${fmt(num('nSp'),0)} × ${fmt(num('vSp'),0)} l, nutzbar ${fmt(nutz*100,0)} %, Nachheizleistung ${fmt(pNh,1)} kW
+` + rows.map(r=>'- ' + strip(r[0]) + ': ' + strip(r[1])).join('\n') +
+`\nErgebnis: Deckungsgrad ${isFinite(ratio)?fmt(ratio*100,0):'–'} % – ${band}\n` +
+      notes.map(n=>'• ' + strip(n[1])).join('\n');
+  }
+
+  ['sTm','sTk','sTw','dN','dQ','dT','wN','wV','tN','tV','xV','gz','tPeak','vSp','nSp','nutz','pNh','pers','spez']
+    .forEach(id=>$(id).addEventListener('input', calcSpeicher));
+
+  $('sCopy').addEventListener('click', async ()=>{
+    const btn = $('sCopy');
+    try{ await navigator.clipboard.writeText(lastReport); btn.textContent = 'Kopiert ✓'; }
+    catch(e){
+      const ta = document.createElement('textarea'); ta.value = lastReport; document.body.appendChild(ta);
+      ta.select(); try{ document.execCommand('copy'); btn.textContent = 'Kopiert ✓'; }catch(_){ btn.textContent = 'Kopieren nicht möglich'; }
+      ta.remove();
+    }
+    setTimeout(()=>{ btn.textContent = 'Ergebnis als Text kopieren'; }, 1800);
+  });
+
+  // =====================================================================
+  // Mischung
+  // =====================================================================
+  let mMode = 'mw';
+  document.querySelectorAll('#mSeg button').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      document.querySelectorAll('#mSeg button').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');
+      mMode = b.dataset.mode;
+      $('mTm').disabled = (mMode==='tm');
+      $('mMmWrap').style.display = (mMode==='mw') ? 'block' : 'none';
+      $('mMwWrap').style.display = (mMode==='mm' || mMode==='tm') ? 'block' : 'none';
+      $('mMkWrap').style.display = (mMode==='tm') ? 'block' : 'none';
+      calcMisch();
+    });
+  });
+
+  function calcMisch(){
+    const tk = num('mTk'), tw = num('mTw');
+    let tm = num('mTm'), mm, mw, mk;
+    const res = $('mResult'), unit = $('mUnit');
+    if(mMode === 'tm'){
+      mw = num('mMw'); mk = num('mMk'); mm = mw + mk;
+      tm = mm > 0 ? (mk*tk + mw*tw) / mm : NaN;
+      $('mTm').value = isFinite(tm) ? Math.round(tm*10)/10 : '';
+      res.textContent = isFinite(tm) ? fmt(tm,1) + ' °C' : '–';
+      unit.textContent = 'Mischtemperatur ϑm';
+    } else {
+      if(!(tw > tm && tm > tk)){ res.textContent = '–'; unit.textContent = 'Bedingung ϑk < ϑm < ϑw nicht erfüllt'; ['mChipW','mChipK','mChipM'].forEach(i=>$(i).textContent='–'); return; }
+      const share = (tm - tk) / (tw - tk);
+      if(mMode === 'mw'){
+        mm = num('mMm'); mw = mm * share; mk = mm - mw;
+        res.textContent = fmt(mw,1) + ' l'; unit.textContent = 'Warmwasser bei ' + fmt(tw,0) + ' °C';
+      } else {
+        mw = num('mMw'); mm = mw / share; mk = mm - mw;
+        res.textContent = fmt(mm,1) + ' l'; unit.textContent = 'Mischwasser bei ' + fmt(tm,0) + ' °C';
+      }
+    }
+    $('mChipW').textContent = fmt(mw,1);
+    $('mChipK').textContent = fmt(mk,1);
+    $('mChipM').textContent = fmt(mm,1);
+
+    // Tabelle Speichertemperatur
+    const tmT = num('mTm');
+    let html = '<tr><td><b>ϑw Speicher</b></td><td><b>WW je 100 l Misch</b></td></tr>';
+    [45,50,55,60,65,70].forEach(t=>{
+      const s = (t > tmT && tmT > tk) ? (tmT - tk)/(t - tk) : NaN;
+      html += `<tr${t===Math.round(tw)?' class="sum"':''}><td>${t} °C</td><td>${isFinite(s)?fmt(s*100,1)+' l':'–'}</td></tr>`;
+    });
+    $('mTable').innerHTML = html;
+  }
+  ['mTm','mTk','mTw','mMm','mMw','mMk'].forEach(id=>$(id).addEventListener('input', calcMisch));
+
+  // =====================================================================
+  // Leitungsinhalt & Fließgeschwindigkeit (aus Leitungsrechner V1)
+  // =====================================================================
+  const materials = {
+    edelstahl: {
+      label: "Edelstahl",
+      hint: "Gängige Press-Edelstahlsysteme (V2A/V4A) für Trinkwasserinstallation, Außendurchmesser wie Kupferreihe. Bei abweichendem Fabrikat Herstellerangaben prüfen.",
+      pipes: [
+        {label:"15 × 1,0 mm", da:15,   di:13.0},
+        {label:"18 × 1,0 mm", da:18,   di:16.0},
+        {label:"22 × 1,2 mm", da:22,   di:19.6},
+        {label:"28 × 1,2 mm", da:28,   di:25.6},
+        {label:"35 × 1,5 mm", da:35,   di:32.0},
+        {label:"42 × 1,5 mm", da:42,   di:39.0},
+        {label:"54 × 1,5 mm", da:54,   di:51.0},
+        {label:"64 × 2,0 mm", da:64,   di:60.0},
+        {label:"76,1 × 2,0 mm", da:76.1, di:72.1},
+        {label:"88,9 × 2,0 mm", da:88.9, di:84.9},
+        {label:"108 × 2,0 mm", da:108,  di:104.0},
+      ]
+    },
+    pehd11: {
+      label: "PE-HD SDR 11",
+      hint: "PE 100, SDR 11 (PN16), Wandstärke nach EN 12201 / DIN 8074. Für erdverlegte Trinkwasser-Hausanschluss-/Versorgungsleitungen üblich.",
+      pipes: [
+        {label:"20 × 1,9 mm", da:20,  di:16.2},
+        {label:"25 × 2,3 mm", da:25,  di:20.4},
+        {label:"32 × 3,0 mm", da:32,  di:26.0},
+        {label:"40 × 3,7 mm", da:40,  di:32.6},
+        {label:"50 × 4,6 mm", da:50,  di:40.8},
+        {label:"63 × 5,8 mm", da:63,  di:51.4},
+        {label:"75 × 6,8 mm", da:75,  di:61.4},
+        {label:"90 × 8,2 mm", da:90,  di:73.6},
+        {label:"110 × 10,0 mm", da:110, di:90.0},
+        {label:"125 × 11,4 mm", da:125, di:102.2},
+        {label:"140 × 12,7 mm", da:140, di:114.6},
+        {label:"160 × 14,6 mm", da:160, di:130.8},
+      ]
+    },
+    pehd17: {
+      label: "PE-HD SDR 17",
+      hint: "PE 100, SDR 17 (PN10), Wandstärke nach EN 12201 / DIN 8074. Dünnwandiger als SDR11, geringerer Druckbereich.",
+      pipes: [
+        {label:"32 × 2,0 mm", da:32,  di:28.0},
+        {label:"40 × 2,4 mm", da:40,  di:35.2},
+        {label:"50 × 3,0 mm", da:50,  di:44.0},
+        {label:"63 × 3,8 mm", da:63,  di:55.4},
+        {label:"75 × 4,5 mm", da:75,  di:66.0},
+        {label:"90 × 5,4 mm", da:90,  di:79.2},
+        {label:"110 × 6,6 mm", da:110, di:96.8},
+        {label:"125 × 7,4 mm", da:125, di:110.2},
+        {label:"140 × 8,3 mm", da:140, di:123.4},
+        {label:"160 × 9,5 mm", da:160, di:141.0},
+      ]
+    },
+    verbund: {
+      label: "Mehrschichtverbund",
+      hint: "Typische PE-X/PE-RT-Aluminium-Verbundrohr-Maße (z.B. Mepla-/MLC-Systeme) für TW-Installation. Wandstärken variieren je Hersteller/System – Systemdatenblatt (DIN EN ISO 21003) im Zweifel prüfen.",
+      pipes: [
+        {label:"16 × 2,0 mm", da:16,  di:12.0},
+        {label:"20 × 2,0 mm", da:20,  di:16.0},
+        {label:"25 × 2,5 mm", da:25,  di:20.0},
+        {label:"32 × 3,0 mm", da:32,  di:26.0},
+        {label:"40 × 3,5 mm", da:40,  di:33.0},
+        {label:"50 × 4,0 mm", da:50,  di:42.0},
+        {label:"63 × 4,5 mm", da:63,  di:54.0},
+        {label:"75 × 6,0 mm", da:75,  di:63.0},
+        {label:"90 × 7,0 mm", da:90,  di:76.0},
+        {label:"110 × 8,5 mm", da:110, di:93.0},
+      ]
+    },
+    stahl: {
+      label: "Stahl verzinkt",
+      hint: "Gewinderohr mittelschwer nach DIN EN 10255 (ehem. DIN 2440), Nennweiten DN15–DN100. Bei „schwer“-Reihe abweichende Wandstärken beachten.",
+      pipes: [
+        {label:"DN 15 (1/2\") · 21,3 × 2,65 mm", da:21.3, di:16.0},
+        {label:"DN 20 (3/4\") · 26,9 × 2,65 mm", da:26.9, di:21.6},
+        {label:"DN 25 (1\") · 33,7 × 3,25 mm", da:33.7, di:27.2},
+        {label:"DN 32 (1¼\") · 42,4 × 3,25 mm", da:42.4, di:35.9},
+        {label:"DN 40 (1½\") · 48,3 × 3,25 mm", da:48.3, di:41.8},
+        {label:"DN 50 (2\") · 60,3 × 3,65 mm", da:60.3, di:53.0},
+        {label:"DN 65 (2½\") · 76,1 × 3,65 mm", da:76.1, di:68.8},
+        {label:"DN 80 (3\") · 88,9 × 4,05 mm", da:88.9, di:80.8},
+        {label:"DN 100 (4\") · 114,3 × 4,50 mm", da:114.3, di:105.3},
+      ]
+    },
+    custom: {
+      label: "Eigene Eingabe",
+      hint: "Innendurchmesser frei eingeben, z.B. für Sonderrohr oder Herstellerangabe abweichend von Standardreihe.",
+      pipes: null
+    }
+  };
+
+  let currentMat = 'edelstahl';
+  const matSelect = $('matSelect'), pipeSelect = $('pipeSelect'), customWrap = $('customDiWrap'), customDi = $('customDi');
+
+  Object.keys(materials).forEach(key=>{
+    const opt = document.createElement('option');
+    opt.value = key; opt.textContent = materials[key].label;
+    if(key === currentMat) opt.selected = true;
+    matSelect.appendChild(opt);
+  });
+  matSelect.addEventListener('change', ()=>{ currentMat = matSelect.value; populatePipeSelect(); updatePipeInfo(); });
+
+  function populatePipeSelect(){
+    const mat = materials[currentMat];
+    pipeSelect.innerHTML = '';
+    if(mat.pipes){
+      mat.pipes.forEach((p, i)=>{
+        const opt = document.createElement('option');
+        opt.value = i; opt.textContent = p.label;
+        pipeSelect.appendChild(opt);
+      });
+      customWrap.style.display = 'none';
+      pipeSelect.style.display = 'block';
+    } else {
+      const opt = document.createElement('option');
+      opt.value = 'custom'; opt.textContent = 'Eigener Innendurchmesser';
+      pipeSelect.appendChild(opt);
+      customWrap.style.display = 'block';
+      pipeSelect.style.display = 'none';
+    }
+    $('matHint').textContent = mat.hint;
+  }
+  function getDi(){
+    const mat = materials[currentMat];
+    if(!mat.pipes) return parseFloat(customDi.value) || 0;
+    return mat.pipes[parseInt(pipeSelect.value)].di;
+  }
+  function getDa(){
+    const mat = materials[currentMat];
+    if(!mat.pipes) return null;
+    return mat.pipes[parseInt(pipeSelect.value)].da;
+  }
+  const literPerMeter = di => (Math.PI/4) * di*di / 1000;
+
+  function updatePipeInfo(){
+    const di = getDi(), da = getDa();
+    $('chipDa').textContent = da !== null ? fmt(da,1) : '–';
+    $('chipDi').textContent = fmt(di,1);
+    $('chipLm').textContent = fmt(literPerMeter(di),3);
+    calcInhalt(); calcFliess();
+  }
+  pipeSelect.addEventListener('change', updatePipeInfo);
+  customDi.addEventListener('input', updatePipeInfo);
+
+  // ---- Leitungsinhalt ----
+  const lenInput = $('lenInput');
+  function calcInhalt(){
+    const total = literPerMeter(getDi()) * (parseFloat(lenInput.value) || 0);
+    $('inhaltResult').textContent = fmt(total, total < 10 ? 3 : 2);
+    const box = $('inhaltBox');
+    box.classList.remove('band-green','band-red');
+    if(total > 3){ box.classList.add('band-red'); $('inhaltBand').textContent = '> 3 l – ohne Zirkulation W 551 nicht eingehalten'; }
+    else { box.classList.add('band-green'); $('inhaltBand').textContent = '≤ 3 l'; }
+  }
+  lenInput.addEventListener('input', calcInhalt);
+  $('lenMinus').addEventListener('click', ()=>{ lenInput.value = Math.max(0, (parseFloat(lenInput.value)||0) - 1); calcInhalt(); });
+  $('lenPlus').addEventListener('click', ()=>{ lenInput.value = (parseFloat(lenInput.value)||0) + 1; calcInhalt(); });
+  document.querySelectorAll('#panel-inhalt .quickbtn').forEach(b=>{
+    b.addEventListener('click', ()=>{ lenInput.value = b.dataset.len; calcInhalt(); });
+  });
+
+  // ---- Fließgeschwindigkeit ----
+  const cntInput = $('cntInput'), perFixture = $('perFixture'), directQ = $('directQ');
+  function calcFliess(){
+    const di = getDi();
+    let q;
+    if(directQ.value && parseFloat(directQ.value) > 0) q = parseFloat(directQ.value);
+    else q = (parseInt(cntInput.value) || 0) * (parseFloat(perFixture.value) || 0);
+    const v = di > 0 ? (4000 * q) / (Math.PI * di*di) : 0;
+    $('vResult').textContent = fmt(v, 2);
+    const box = $('vResultBox'), lab = $('vBandLabel');
+    box.classList.remove('band-green','band-amber','band-red');
+    if(v <= 2.0){ box.classList.add('band-green'); lab.textContent = 'im empfohlenen Bereich'; }
+    else if(v <= 3.0){ box.classList.add('band-amber'); lab.textContent = 'erhöht – prüfen'; }
+    else { box.classList.add('band-red'); lab.textContent = 'zu hoch – Dimension prüfen'; }
+  }
+  cntInput.addEventListener('input', calcFliess);
+  perFixture.addEventListener('input', calcFliess);
+  directQ.addEventListener('input', calcFliess);
+  $('cntMinus').addEventListener('click', ()=>{ cntInput.value = Math.max(1, (parseInt(cntInput.value)||1) - 1); calcFliess(); });
+  $('cntPlus').addEventListener('click', ()=>{ cntInput.value = (parseInt(cntInput.value)||1) + 1; calcFliess(); });
+  document.querySelectorAll('#panel-fliess .quickbtn').forEach(b=>{
+    b.addEventListener('click', ()=>{ perFixture.value = b.dataset.q; directQ.value=''; calcFliess(); });
+  });
+
+  // ---- Init ----
+  populatePipeSelect();
+  pipeSelect.value = 2;
+  updatePipeInfo();
+  calcSpeicher();
+  calcMisch();
+</script>
+
+<script>
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', ()=>{ navigator.serviceWorker.register('sw.js').catch(()=>{}); });
+  }
+</script>
+</body>
+</html>
