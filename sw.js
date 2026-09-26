@@ -1,5 +1,5 @@
 // Version hochzählen, wenn index.html geändert wurde -> Geräte laden neu
-const CACHE = 'twh-tools-v1';
+const CACHE = 'twh-tools-v2';
 const FILES = ['./', 'index.html', 'manifest.webmanifest', 'icon-180.png', 'icon-192.png', 'icon-512.png'];
 
 self.addEventListener('install', e => {

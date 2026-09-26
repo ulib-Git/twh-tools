@@ -100,6 +100,13 @@
   .notes li.n-green{border-color:var(--teal);}
   .notes li.n-blue{border-color:var(--blue);}
 
+  .sp-row{border:1px solid var(--line); border-radius:12px; padding:12px; margin-bottom:10px; background:var(--paper-raise);}
+  .sp-row .sp-head{display:flex; justify-content:space-between; align-items:center; font-size:13px; font-weight:600; color:var(--ink);}
+  .sp-row .sp-del{border:none; background:none; color:var(--red); font-size:12.5px; font-weight:600; cursor:pointer; font-family:'IBM Plex Sans',sans-serif; padding:4px 0;}
+  .sp-row label{margin-top:10px;}
+  .addbtn{width:100%; padding:11px; border-radius:10px; border:1.5px dashed var(--line); background:var(--paper); color:var(--blue); font-size:14px; font-weight:600; font-family:'IBM Plex Sans',sans-serif; cursor:pointer;}
+  .addbtn:active{border-color:var(--blue);}
+
   .copybtn{width:100%; margin-top:12px; padding:12px; border-radius:10px; border:1px solid var(--navy); background:var(--paper-raise); color:var(--navy); font-size:14px; font-weight:600; font-family:'IBM Plex Sans',sans-serif; cursor:pointer;}
   .copybtn:active{background:var(--navy); color:#fff;}
 
@@ -191,17 +198,19 @@
 
     <div class="card">
       <h2>Verbauter Speicher &amp; Nachheizung</h2>
-      <div class="grid2">
-        <div><label>Speicherinhalt (l)</label><input type="number" id="vSp" value="300" min="0" step="50" inputmode="decimal"></div>
-        <div><label>Anzahl Speicher</label><input type="number" id="nSp" value="1" min="1" step="1" inputmode="numeric"></div>
-      </div>
-      <label>Nutzbarer Anteil (%)</label>
+      <div id="spList"></div>
+      <button type="button" class="addbtn" id="spAdd">+ weiterer Speicher</button>
+      <div class="hint">Nachheizleistung = tatsächlich an den jeweiligen Speicher übertragbare Leistung (Wärmetauscher/Wärmeerzeuger, Typenschild bzw. Datenblatt – der kleinere Wert zählt). 0 = keine Nachheizung in der Spitze.</div>
+
+      <label style="margin-top:16px;">Nutzbarer Anteil (%)</label>
       <input type="number" id="nutz" value="85" min="10" max="100" step="5" inputmode="decimal">
       <div class="hint">Durch Durchmischung am Kaltwassereintritt ist nicht der volle Inhalt auf ϑ<sub>w</sub> entnehmbar. Richtwert 80–90 % bei guter Schichtung, bei liegenden Speichern / schlechter Einströmung deutlich weniger.</div>
 
-      <label>Nachheizleistung (kW)</label>
-      <input type="number" id="pNh" value="15" min="0" step="1" inputmode="decimal">
-      <div class="hint">Tatsächlich an den Speicher übertragbare Leistung (Wärmetauscher/Wärmeerzeuger, Typenschild bzw. Datenblatt – der kleinere Wert zählt). 0 = keine Nachheizung in der Spitze berücksichtigen.</div>
+      <div class="pipe-info">
+        <div class="chip"><div class="val" id="spCount">1</div><div class="lab">Speicher</div></div>
+        <div class="chip"><div class="val" id="spVol">300 l</div><div class="lab">Gesamtvolumen</div></div>
+        <div class="chip"><div class="val" id="spPow">15 kW</div><div class="lab">Nachheizung ges.</div></div>
+      </div>
     </div>
 
     <div class="card">
@@ -378,17 +387,54 @@
   // Speicherprüfung
   // =====================================================================
   const presets = {
-    efh:    {dN:2,  dQ:9,  dT:6, wN:1, wV:140, tN:2,  tV:5, xV:10, gz:100, tPeak:30, vSp:300,  nSp:1, pNh:15, pers:4,  spez:30},
-    mfh:    {dN:8,  dQ:9,  dT:6, wN:2, wV:140, tN:10, tV:5, xV:40, gz:70,  tPeak:60, vSp:750,  nSp:1, pNh:40, pers:25, spez:30},
-    klinik: {dN:10, dQ:9,  dT:7, wN:0, wV:140, tN:20, tV:5, xV:60, gz:80,  tPeak:60, vSp:1000, nSp:1, pNh:50, pers:20, spez:50},
-    sport:  {dN:20, dQ:9,  dT:5, wN:0, wV:140, tN:6,  tV:3, xV:0,  gz:100, tPeak:15, vSp:1500, nSp:1, pNh:60, pers:60, spez:15},
+    efh:    {dN:2,  dQ:9,  dT:6, wN:1, wV:140, tN:2,  tV:5, xV:10, gz:100, tPeak:30, pers:4,  spez:30, sp:[{v:300,p:15}]},
+    mfh:    {dN:8,  dQ:9,  dT:6, wN:2, wV:140, tN:10, tV:5, xV:40, gz:70,  tPeak:60, pers:25, spez:30, sp:[{v:750,p:40}]},
+    klinik: {dN:10, dQ:9,  dT:7, wN:0, wV:140, tN:20, tV:5, xV:60, gz:80,  tPeak:60, pers:20, spez:50, sp:[{v:500,p:25},{v:500,p:25}]},
+    sport:  {dN:20, dQ:9,  dT:5, wN:0, wV:140, tN:6,  tV:3, xV:0,  gz:100, tPeak:15, pers:60, spez:15, sp:[{v:1500,p:60}]},
   };
   document.querySelectorAll('[data-preset]').forEach(b=>{
     b.addEventListener('click', ()=>{
       const p = presets[b.dataset.preset];
-      Object.keys(p).forEach(k=>{ $(k).value = p[k]; });
+      Object.keys(p).forEach(k=>{ if(k !== 'sp') $(k).value = p[k]; });
+      speicher = p.sp.map(s=>({...s}));
+      renderSpeicher();
       calcSpeicher();
     });
+  });
+
+  // ---- Speicherliste ----
+  let speicher = [{v:300, p:15}];
+  const spList = $('spList');
+
+  function renderSpeicher(){
+    spList.innerHTML = speicher.map((s,i)=>`
+      <div class="sp-row">
+        <div class="sp-head">Speicher ${i+1}${speicher.length > 1 ? `<button type="button" class="sp-del" data-del="${i}">entfernen</button>` : ''}</div>
+        <div class="grid2">
+          <div><label>Speicherinhalt (l)</label><input type="number" data-i="${i}" data-k="v" value="${s.v}" min="0" step="50" inputmode="decimal"></div>
+          <div><label>Nachheizleistung (kW)</label><input type="number" data-i="${i}" data-k="p" value="${s.p}" min="0" step="1" inputmode="decimal"></div>
+        </div>
+      </div>`).join('');
+  }
+  spList.addEventListener('input', e=>{
+    const t = e.target;
+    if(t.dataset.i === undefined) return;
+    const v = parseFloat(t.value);
+    speicher[+t.dataset.i][t.dataset.k] = isFinite(v) ? v : 0;
+    calcSpeicher();
+  });
+  spList.addEventListener('click', e=>{
+    const d = e.target.dataset.del;
+    if(d === undefined) return;
+    speicher.splice(+d, 1);
+    renderSpeicher(); calcSpeicher();
+  });
+  $('spAdd').addEventListener('click', ()=>{
+    const last = speicher[speicher.length-1] || {v:300, p:15};
+    speicher.push({v:last.v, p:last.p});
+    renderSpeicher(); calcSpeicher();
+    const inputs = spList.querySelectorAll('input');
+    inputs[inputs.length-2].focus();
   });
 
   let lastReport = '';
@@ -411,11 +457,15 @@
     const mMix = (vDusche + vWanne + vWT + vX) * gz;       // l Mischwasser 40 °C
     const mW   = isFinite(share) ? mMix * share : NaN;       // l Warmwasser bei ϑw
 
-    const vGes   = num('vSp') * Math.max(1, num('nSp'));
+    const nSp    = speicher.length;
+    const vGes   = speicher.reduce((a,s)=>a + s.v, 0);
     const nutz   = Math.min(100, Math.max(0, num('nutz'))) / 100;
     const vNutz  = vGes * nutz;
 
-    const pNh   = num('pNh');
+    const pNh   = speicher.reduce((a,s)=>a + s.p, 0);
+    $('spCount').textContent = nSp;
+    $('spVol').textContent = fmt(vGes,0) + ' l';
+    $('spPow').textContent = fmt(pNh, pNh % 1 ? 1 : 0) + ' kW';
     const tPeak = num('tPeak');
     // Nachheizmenge in der Spitzenzeit: V = P·t / (c·Δϑ)
     const vNh   = (dT > 0) ? pNh * tPeak * 60 / (C_W * dT) : 0;
@@ -474,7 +524,7 @@
       if(exch < 1) notes.push(['n-amber', `Rechnerischer Wasseraustausch nur ${fmt(exch,2)}× pro Tag – Speicherinhalt wird nicht täglich ausgetauscht. Stagnationsrisiko, Aufenthaltszeit ca. ${fmt(1/exch,1)} Tage. Überdimensionierung / Außerbetriebnahme einzelner Speicher prüfen.`]);
       else notes.push(['n-green', `Wasseraustausch ${fmt(exch,2)}× pro Tag – Speicherinhalt wird rechnerisch mindestens täglich erneuert.`]);
     }
-    if(num('nSp') > 1) notes.push(['n-blue', `${fmt(num('nSp'),0)} Speicher: Durchströmung (Reihe/parallel nach Tichelmann) und gleichmäßigen Austausch aller Speicher prüfen – ungleich durchströmte Parallelspeicher stagnieren.`]);
+    if(nSp > 1) notes.push(['n-blue', `${nSp} Speicher: Durchströmung (Reihe/parallel nach Tichelmann) und gleichmäßigen Austausch aller Speicher prüfen – ungleich durchströmte Parallelspeicher stagnieren.`]);
     if(isFinite(tAuf) && tAuf > 120) notes.push(['n-amber', `Aufheizzeit ca. ${fmt(tAuf/60,1)} h – Nachheizleistung im Verhältnis zum Speichervolumen gering; Regeneration zwischen den Spitzen prüfen.`]);
     $('sNotes').innerHTML = notes.map(n=>`<li class="${n[0]}">${n[1]}</li>`).join('');
 
@@ -484,13 +534,14 @@
 `Speicherprüfung Trinkwassererwärmer
 Temperaturen: ϑm = ${fmt(tm,0)} °C, ϑk = ${fmt(tk,0)} °C, ϑw = ${fmt(tw,0)} °C → Warmwasseranteil ${isFinite(share)?fmt(share*100,1):'–'} %
 Spitzenbedarf: Duschen ${fmt(num('dN'),0)} × ${fmt(num('dQ'),1)} l/min × ${fmt(num('dT'),0)} min, Wannen ${fmt(num('wN'),0)} × ${fmt(num('wV'),0)} l, Waschtische ${fmt(num('tN'),0)} × ${fmt(num('tV'),0)} l, Sonstiges ${fmt(vX,0)} l; Gleichzeitigkeit ${fmt(gz*100,0)} %, Spitzenzeit ${fmt(tPeak,0)} min
-Speicher: ${fmt(num('nSp'),0)} × ${fmt(num('vSp'),0)} l, nutzbar ${fmt(nutz*100,0)} %, Nachheizleistung ${fmt(pNh,1)} kW
+Speicher: ${speicher.map((sp,i)=>`Nr. ${i+1}: ${fmt(sp.v,0)} l / ${fmt(sp.p,1)} kW`).join('; ')}
+Gesamt: ${nSp} Speicher, ${fmt(vGes,0)} l, ${fmt(pNh,1)} kW Nachheizleistung, nutzbar ${fmt(nutz*100,0)} %
 ` + rows.map(r=>'- ' + strip(r[0]) + ': ' + strip(r[1])).join('\n') +
 `\nErgebnis: Deckungsgrad ${isFinite(ratio)?fmt(ratio*100,0):'–'} % – ${band}\n` +
       notes.map(n=>'• ' + strip(n[1])).join('\n');
   }
 
-  ['sTm','sTk','sTw','dN','dQ','dT','wN','wV','tN','tV','xV','gz','tPeak','vSp','nSp','nutz','pNh','pers','spez']
+  ['sTm','sTk','sTw','dN','dQ','dT','wN','wV','tN','tV','xV','gz','tPeak','nutz','pers','spez']
     .forEach(id=>$(id).addEventListener('input', calcSpeicher));
 
   $('sCopy').addEventListener('click', async ()=>{
@@ -748,6 +799,7 @@ Speicher: ${fmt(num('nSp'),0)} × ${fmt(num('vSp'),0)} l, nutzbar ${fmt(nutz*100
   populatePipeSelect();
   pipeSelect.value = 2;
   updatePipeInfo();
+  renderSpeicher();
   calcSpeicher();
   calcMisch();
 </script>
